@@ -1,0 +1,21 @@
+{
+  "name": "vibe-wise",
+  "version": "0.1.44",
+  "description": "You build. AI writes. Learn how to build software while your coding assistant writes the code.",
+  "author": { "name": "Noah Kim" },
+  "repository": "https://github.com/Chombled/vibe-wise-codex",
+  "license": "MIT",
+  "keywords": ["learning", "architecture", "engineering"],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "VibeWise",
+    "shortDescription": "Learn software design while AI writes the code",
+    "longDescription": "Lead the design, examine tradeoffs, and approve each implementation step. VibeWise keeps local learning notes and restores pending checkpoints across sessions.",
+    "developerName": "Noah Kim",
+    "category": "Productivity",
+    "websiteURL": "https://github.com/Chombled/vibe-wise-codex",
+    "composerIcon": "./assets/vibewise-icon.png",
+    "logo": "./assets/vibewise-icon.png"
+  }
+}

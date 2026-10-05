@@ -1,6 +1,6 @@
 ---
 name: learn
-description: Activate or resume learning-first development. You lead the design; Claude gives feedback, explains concepts, asks follow-ups, and writes the agreed code.
+description: Activate or resume learning-first development. You lead the design; the assistant gives feedback, explains concepts, asks follow-ups, and writes the agreed code.
 disable-model-invocation: true
 ---
 
@@ -16,9 +16,10 @@ An ordinary build request in this mode retains that loop;
 only an explicit request to skip or pause bypasses it.
 Do not switch to a subagent or require manual coding by default.
 
-Use the Read tool for plugin guides instead of printing them with Bash `cat`.
-Use Glob to discover optional learner-state files before reading them. A missing
-`.vibe-wise/` directory is normal first-time setup, not an error. If a shell
+In Claude Code, use Read for plugin guides and Glob to discover optional state.
+In Codex, use available file tools or safely quoted shell reads and file discovery.
+Resolve guides relative to this installed SKILL.md, not the user's project.
+A missing `.vibe-wise/` directory is normal first-time setup, not an error. If a shell
 check is necessary, handle absence with an explicit conditional that succeeds;
 don't run `ls` on a possibly missing directory or hide actual read failures.
 Keep guide reads separate from optional state checks so a missing file doesn't

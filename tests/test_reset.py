@@ -2,13 +2,14 @@
 
 import importlib.util
 import json
-from pathlib import Path
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "skills/reset/reset.py"
@@ -61,6 +62,27 @@ class ResetTests(unittest.TestCase):
         self.assert_originals(state, originals)
         self.assertEqual(set(p.name for p in state.iterdir()), set(originals))
         # Cancel means no confirmed command is run; preview has no side effects.
+
+    def test_installed_helper_works_without_plugin_environment_variables(self):
+        installed = self.root / "installed plugin with spaces"
+        for name in ("hooks", "skills"):
+            shutil.copytree(ROOT / name, installed / name)
+        state, originals = self.notes()
+        command = [sys.executable, "-B", str(installed / "skills/reset/reset.py"),
+                   "--cwd", str(self.project)]
+        env = {"PATH": os.defpath}
+        preview = subprocess.run(command, env=env, cwd=self.root,
+                                 capture_output=True, text=True, check=True)
+        result = json.loads(preview.stdout)
+        self.assertEqual(result["status"], "preview")
+        self.assert_originals(state, originals)
+        confirmed = subprocess.run(command + ["--confirm", result["confirmation"]],
+                                   env=env, cwd=self.root,
+                                   capture_output=True, text=True, check=True)
+        result = json.loads(confirmed.stdout)
+        self.assertEqual(result["status"], "reset")
+        self.assert_originals(Path(result["backup"]), originals)
+        self.assertIn("Onboarding: incomplete", (state / "profile.md").read_text())
 
     def test_reset_backs_up_only_notes_and_restarts_onboarding(self):
         state, originals = self.notes()

@@ -8,7 +8,7 @@
     {
       "name": "vibe-wise",
       "source": "./",
-      "description": "Learn how to build software while Claude writes the code."
+      "description": "Learn how to build software while your coding assistant writes the code."
     }
   ]
 }

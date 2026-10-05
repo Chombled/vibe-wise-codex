@@ -107,8 +107,15 @@ Build checkpoints and Design checkpoint discussions are opportunities to practic
 communicating engineering ideas in the learner's own words. Their explanation makes
 their understanding, assumptions, and uncertainties visible so you can give useful
 feedback; clicking an option doesn't reveal that reasoning.
-Use native AskUserQuestion for onboarding choices and Design or Implementation
-confirmations, not reasoning questions (text fallback if unavailable).
+Use the host's native question picker for onboarding choices and Design or
+Implementation confirmations, not reasoning questions. In Claude Code use
+AskUserQuestion; in Codex use request_user_input or request_user_input_async when
+available in the current mode. Otherwise ask the same question in chat and wait.
+Ask one question at a time. A preselected option, silence, or permission to run
+tools is not an answer or checkpoint approval. Do not change modes just to get a picker.
+When waiting for a chat answer, keep the question and any choices in the final
+response; do not replace them with a closing status recap.
+In Codex, put chat questions in the final channel, not a commentary update.
 Reports need no question.
 Headings use `✦ <Type>: <description>` with exact labels:
 `Build checkpoint`, `Design checkpoint`, `Implementation checkpoint`, `System check`,

@@ -1,6 +1,6 @@
 # Development
 
-V1 uses Claude Code skills, Markdown instructions, one read-only Python hook,
+V1 uses shared Claude Code/Codex skills, Markdown instructions, one read-only Python hook,
 and a small Python helper for confirmed learning resets.
 There are no packages to install. Python 3.8+ is sufficient for the hook and tests.
 
@@ -18,7 +18,10 @@ The tests execute the registered hook command with real JSON stdin in temporary
 projects. They cover activation, restoration, partial onboarding, paused mode,
 subdirectories, repository/worktree boundaries, missing/invalid files, symlinks,
 constant-size restoration instructions as notes grow, and read-only behavior.
-They do not prove that Claude follows the instructions or teaches well.
+The restoration scenarios run with both Claude's and Codex's plugin-root variables,
+including installed paths with spaces. Packaging checks cover shared identity,
+component paths, marketplace resolution, and explicit-only invocation policies.
+They do not prove that either assistant follows the instructions or teaches well.
 Rename coverage verifies that `.sensible-vibes/` notes restore without migration,
 `.vibe-wise/` takes precedence at the same location, and legacy lookup preserves
 repository boundaries, nearest-state selection, and symlink rejection.
@@ -28,8 +31,25 @@ backup/write failures, and restoring incomplete onboarding after reset.
 
 ## Conversation smoke tests
 
-Use an authenticated Claude Code session and temporary copies of projects.
-Launch with `claude --plugin-dir /absolute/path/to/vibe-wise`.
+Use authenticated local sessions and temporary copies of projects. Run the scenarios
+below on each host; use its Learn/Reset skill picker and lifecycle commands.
+For Claude Code, launch with `claude --plugin-dir /absolute/path/to/vibe-wise`.
+
+For Codex, add this checkout with `codex plugin marketplace add /absolute/path/to/vibe-wise-codex`
+and install `codex plugin add vibe-wise@vibe-wise-codex`. Use an isolated test
+configuration for installation checks rather than changing your personal settings.
+Review the hook with `/hooks`, restart, then select VibeWise Learn through `/skills`
+or the desktop composer. Reset is a separate explicit skill selection.
+For cross-host continuation, reuse the same temporary project sequentially:
+confirm that preferences and a pending implementation approval survive switching
+hosts, and that paused learning stays paused. Also test an untrusted hook:
+it must be skipped, while explicit Learn still restores saved notes.
+
+Codex supports SessionStart sources `startup`, `resume`, `clear`, and `compact`;
+`fork` remains registered for Claude Code. Both use the same read-only hook and
+`hookSpecificOutput.additionalContext` protocol. Native pickers depend on the
+tools available in the current mode; chat fallback must wait for an actual answer,
+including when cancelling or confirming Reset.
 
 For a manual walkthrough based on the playground notes app, see the
 [Notion-style demo](demos/notion-dupe.md).
@@ -41,11 +61,11 @@ For a manual walkthrough based on the playground notes app, see the
    use native pickers with one question per screen; no questionnaire dump or
    failed shell check for a missing state directory.
 2. **Existing unfamiliar repository:** Use a separate copy of a real repository.
-   Choose the existing-repository flow. Confirm Claude reads actual entry points
+   Choose the existing-repository flow. Confirm the assistant reads actual entry points
    and configuration, gives an accurate short map before familiarity questions,
    asks whole-system versus focused scope, and doesn't invent a frontend/database.
 3. **Checkpoint → implementation:** Ask for a meaningful feature, such as durable
-   storage or retrying an external request. Confirm Claude asks one reasoning
+   storage or retrying an external request. Confirm the assistant asks one reasoning
    question under a title naming the decision, before suggesting its own solution
    or implementing the decision. Give a partial answer; check that
    it refines the answer, names the coding scope in an Implementation checkpoint,
@@ -55,7 +75,7 @@ For a manual walkthrough based on the playground notes app, see the
    paused and updates the approach if needed. Select Implement this step;
    check it writes the code and records only evidenced learning. Restart while a
    confirmation is pending and confirm it preserves that pause.
-4. **Skip and adaptation:** Say “I'm completely lost.” Confirm Claude explains
+4. **Skip and adaptation:** Say “I'm completely lost.” Confirm the assistant explains
    the relevant pieces and returns one manageable reasoning step, without dumping
    a complete plan or repeatedly demanding guesses. Ask for an explanation or say “skip”; it should
    explain and proceed to a Design checkpoint without demanding another attempt. “Just
@@ -67,7 +87,7 @@ For a manual walkthrough based on the playground notes app, see the
 6. **Guided foundations:** With a beginner profile and a new project, check that
    essential capabilities are established and preserved when selecting a platform;
    stack, storage, and deployment must remain visible open decisions. Ask what an
-   unfamiliar term means while answering a checkpoint. Claude should explain it
+   unfamiliar term means while answering a checkpoint. the assistant should explain it
    and return to a manageable reasoning step, not bundle new architecture choices
    into an implementation approval. Use different projects to avoid overfitting.
    When labeling an explanation, use Concept for what something is or how it works,
@@ -80,12 +100,12 @@ For a manual walkthrough based on the playground notes app, see the
    Design checkpoint first. Several Build checkpoints may lead to one confirmation.
    Option descriptions should invite clarification and express readiness to proceed;
    choosing confirmation alone must not be recorded as demonstrated understanding.
-   If Claude proposes additional implementation details, check that a concise list
+   If the assistant proposes additional implementation details, check that a concise list
    or Detail / Proposal / Why it matters table distinguishes them from learner
    decisions. Selecting Discuss should allow questions about individual items;
    unresolved consequential design choices still require learner reasoning.
 7. **Preference versus reasoning:** Answer a checkpoint with a tentative preference
-   and no rationale. Claude should ask one focused question about implications or
+   and no rationale. the assistant should ask one focused question about implications or
    tradeoffs, not invent the learner's reasoning, praise mastery, or immediately
    present confirmation buttons. Verify that this holds across different projects.
 8. **Diagrams:** During orientation or a system check, confirm a compact terminal
@@ -100,13 +120,13 @@ For a manual walkthrough based on the playground notes app, see the
    onboarding and confirmations, with no trailing paragraphs obscuring the response point.
    Reasoning questions should be open-ended in chat, not in a picker or its notes field.
 9. **Clarification without steering:** Ask about an unfamiliar concept mid-decision.
-   Claude should clarify it, correct any misleading framing, and return to one
+   The assistant should clarify it, correct any misleading framing, and return to one
    question about the project's requirements or constraints. It should not replace
    reasoning with a solution menu, bundle independent choices, or steer toward an
    architecture because it offers more learning opportunities.
 10. **Learning first:** With default preferences, make an ordinary build request.
     Before any recommendation, solution menu, revealing diagram, dependency install,
-    or application scaffold, Claude must ask for the learner's approach and wait.
+    or application scaffold, the assistant must ask for the learner's approach and wait.
     Answer, then check that refinement doesn't silently decide the next problem.
     Test unfamiliar concepts with neutral background, and familiar concepts with
     a new tradeoff: neither should remove the learner's turn to reason. Explicitly
@@ -121,7 +141,7 @@ For a manual walkthrough based on the playground notes app, see the
     Experience must not change the saved checkpoint frequency.
 
 12. **Evaluation and concise confirmation:** Give a confident but flawed proposal;
-    Claude should name the violated constraint rather than praise confidence.
+    The assistant should name the violated constraint rather than praise confidence.
     Give a sound proposal; it should explain why and combine feedback with a concise
     Design checkpoint, without redundant questions. Compare two viable approaches:
     tradeoffs should be tied to the project, not a claim of one correct answer.
@@ -134,13 +154,13 @@ For a manual walkthrough based on the playground notes app, see the
     again and confirm: original notes must exist in the reported backup, the
     active profile must be incomplete, and onboarding must ask fresh questions
     rather than reuse old preferences. Repeat with legacy notes and after restart.
-    If notes change during confirmation, Claude must preview and confirm again.
+    If notes change during confirmation, the assistant must preview and confirm again.
 
 14. **Requirements versus design:** Give a product requirement without proposing
-    a mechanism. Claude should record the requirement, then invite a concrete
+    a mechanism. The assistant should record the requirement, then invite a concrete
     design attempt before offering a solution or confirmation. It must not count
     the requirement as demonstrated engineering understanding. Combine a near-term
-    single-user pilot with future public availability; Claude should preserve both
+    single-user pilot with future public availability; the assistant should preserve both
     rather than invent a contradiction or choose the storage layout itself. Ask
     for grounding: the response should clarify concepts and return an open design
     step, not give the complete design and quiz the learner on recalling it.
@@ -151,9 +171,9 @@ For a manual walkthrough based on the playground notes app, see the
     should clarify the learner's model, preserving unknown links until discussed,
     rather than present a complete architecture for the learner to rubber-stamp.
     After clarifying desired behavior and edge cases, check the handoff to technical
-    design: Claude must invite the learner's representation before supplying its
+    design: the assistant must invite the learner's representation before supplying its
     own structure, including through an explanatory diagram.
-15. **Implementation report:** After an approved step, Claude should explain the
+15. **Implementation report:** After an approved step, the assistant should explain the
     changed files, important code mechanics, connection to the learner's design,
     any tests added or updated and what they cover, and actual verification results.
     Distinguish tests written from checks run; unrun checks must be explicit.
@@ -163,7 +183,7 @@ For a manual walkthrough based on the playground notes app, see the
     Feedback should be factual and specific, with no personal praise, hype, or
     congratulatory filler. Corrections should be direct without belittling.
 16. **Coherent reasoning and faithful confirmation:** Offer a rough component list
-    before the overall flow is understood. Claude should invite the learner to
+    before the overall flow is understood. The assistant should invite the learner to
     connect responsibilities and flows rather than immediately start a chain of
     implementation-detail questions. When the learner is stuck, explain the missing
     concept directly and return to a meaningful decision, without hints that funnel
@@ -174,6 +194,64 @@ For a manual walkthrough based on the playground notes app, see the
 Do not commit `.vibe-wise/` or test transcripts. The plugin recommends an
 ignore rule during onboarding, but changes `.gitignore` only after telling the
 user and receiving their instruction to make the edit.
+
+## Codex compatibility references
+
+Checked on 2026-10-05:
+
+- [Plugin packaging](https://developers.openai.com/plugins/build/plugins): the
+  compatibility manifest references the shared skills and hooks. The Codex
+  marketplace points at this repository's root; installation uses a cached copy.
+- [Skills](https://learn.chatgpt.com/docs/build-skills): `agents/openai.yaml`
+  sets `allow_implicit_invocation: false` for Learn and Reset. Claude's
+  `disable-model-invocation: true` is preserved separately.
+- [Hooks](https://learn.chatgpt.com/docs/hooks): non-managed plugin hooks require
+  trust of their current definition. Codex supplies `PLUGIN_ROOT` and compatibility
+  `CLAUDE_PLUGIN_ROOT`; the command accepts either, while ordinary skill shell
+  calls resolve helpers from the installed skill location instead.
+
+Notes retain their existing format and project-boundary lookup. There is no
+state migration or synchronization for concurrent assistant sessions.
+The historical verification reports below concern Claude Code only.
+
+## 0.1.44 verification
+
+Checked on 2026-10-05 with Codex CLI 0.160.0:
+
+- All 67 unit tests pass. The same restoration scenarios run under both hosts'
+  root variables; Reset also works from an installed path with spaces without
+  plugin environment variables.
+- Isolated marketplace discovery, installation, enabling, and same-version
+  reinstall pass. Reinstall refreshes the cached guides. Codex's app-server loads
+  both namespaced skills and their display metadata without errors, and lists
+  exactly one plugin hook as untrusted with no loading warnings.
+- Live Codex checks create only learning notes during initial onboarding, restore
+  an implementation approval beyond 40,000 characters into progress, preserve
+  pause across a new session, and resume the pending checkpoint through explicit
+  Learn. None writes application code without approval.
+- Live Reset preview and Cancel leave notes unchanged. Explicit Reset learning
+  backs up all three originals and restarts incomplete onboarding with fresh
+  questions. The checks use temporary projects and an isolated installation;
+  restoration uses a one-off trust bypass for the inspected read-only hook, not
+  a change to personal hook trust.
+- Focused Ruff checks pass:
+  `ruff check --isolated --select E4,E7,E9,F,I hooks/session_start.py tests/test_session_start.py tests/test_reset.py tests/test_packaging.py`.
+  The new packaging test is Ruff-formatted and `git diff --check` passes.
+  Broader Ruff settings report four pre-existing style findings in `test_reset.py`
+  (two C401 and two SIM117); unrelated test bodies are preserved.
+
+Claude validation and live cross-host switching were not run because Claude Code
+is not installed here. The standalone skill validator was attempted but requires
+PyYAML, which is absent; no dependency was added. Codex's native skill loader and
+packaging tests provide the available validation instead. Desktop pickers, the
+persistent hook-trust UI, and actual interactive compaction remain unverified;
+compaction's hook payload and restoration are covered by subprocess tests.
+
+Initial chat-fallback onboarding runs asked one setup question, then added a
+status recap. Instructions now specify the final response channel; confirmed
+Reset's fresh onboarding and explicit resume kept their response points visible.
+Question placement and teaching quality remain model-dependent. These checks do
+not establish consistent behavior throughout an entire learning conversation.
 
 ## Design and official references
 

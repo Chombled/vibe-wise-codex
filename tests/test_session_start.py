@@ -2,13 +2,13 @@
 
 import json
 import os
-from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = json.loads((ROOT / "hooks/hooks.json").read_text())
@@ -16,6 +16,8 @@ REGISTRATION = CONFIG["hooks"]["SessionStart"][0]
 
 
 class SessionStartTests(unittest.TestCase):
+    plugin_variable = "CLAUDE_PLUGIN_ROOT"
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="vibe-wise-test-")
         self.addCleanup(self.temp.cleanup)
@@ -43,19 +45,19 @@ class SessionStartTests(unittest.TestCase):
         )
         return directory
 
-    def run_hook(self, cwd=None, source="startup", raw=None):
+    def run_hook(self, cwd=None, source="startup", raw=None, plugin_root=ROOT):
         payload = raw if raw is not None else json.dumps({
             "hook_event_name": "SessionStart", "source": source,
             "cwd": str(cwd or self.project),
         })
         result = subprocess.run(
             REGISTRATION["hooks"][0]["command"], shell=True,
-            input=payload, text=True, capture_output=True, timeout=5,
+            input=payload, text=True, capture_output=True, timeout=5, check=False,
             # The hook needs a Python executable and its plugin location, not the
             # developer's credentials or unrelated environment configuration.
             env={
                 "PATH": os.pathsep.join((str(Path(sys.executable).parent), os.defpath)),
-                "CLAUDE_PLUGIN_ROOT": str(ROOT),
+                self.plugin_variable: str(plugin_root),
             }, cwd=self.root,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -66,6 +68,15 @@ class SessionStartTests(unittest.TestCase):
         result = self.run_hook(**kwargs)["hookSpecificOutput"]
         self.assertEqual(result["hookEventName"], "SessionStart")
         return result["additionalContext"]
+
+    def test_installed_plugin_path_with_spaces(self):
+        installed = self.root / "installed plugin with spaces"
+        for name in ("hooks", "skills"):
+            shutil.copytree(ROOT / name, installed / name)
+        self.state()
+        context = self.context(plugin_root=installed)
+        self.assertIn(str(installed / "skills/learn/SKILL.md"), context)
+        self.assertNotIn(str(ROOT / "skills/learn/SKILL.md"), context)
 
     def test_fresh_project_is_inactive_and_hook_writes_nothing(self):
         self.assertIsNone(self.run_hook())
@@ -251,6 +262,12 @@ class SessionStartTests(unittest.TestCase):
         self.assertIn("Restarting or compacting is not approval", context)
         self.assertNotIn("Use SQLite", context)
         self.assertNotIn("JSON storage", context)
+
+
+class CodexSessionStartTests(SessionStartTests):
+    """Run the same restoration scenarios with only Codex's root variable."""
+
+    plugin_variable = "PLUGIN_ROOT"
 
 
 if __name__ == "__main__":

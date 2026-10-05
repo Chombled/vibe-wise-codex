@@ -4,10 +4,18 @@ Guide one step at a time. Reuse answers already given; don't dump a questionnair
 If the profile says `Onboarding reset: pending`, reuse only answers given after
 that reset. Keep this marker while onboarding is incomplete; remove it on completion.
 Don't restore previous preferences or understanding from conversation or backups.
-For onboarding choices, call AskUserQuestion with exactly one question, 2–4 short options,
-brief descriptions, a header of at most 12 characters, and `multiSelect: false`.
-Use its native keyboard picker, not a printed imitation. If unavailable, ask one
-plain-text question. Open-ended answers belong in chat.
+For onboarding choices, use the host's available native question picker with
+exactly one question and short options with brief descriptions. In Claude Code,
+use AskUserQuestion with 2–4 options, a header of at most 12 characters, and
+`multiSelect: false`. In Codex, use request_user_input (2–3 options) or
+request_user_input_async when available in the current mode. If a question has
+four choices but the picker allows only three, ask it in chat without dropping
+choices. Do not print an imitation picker. If unavailable, ask one plain-text
+question and wait. Open-ended answers belong in chat. A default selection or
+silence is not an answer.
+When using chat fallback, end the turn with the question and its choices, without
+a separate status recap that hides the response point.
+In Codex, ask that question in the final channel, not commentary.
 
 Briefly explain: learning comes first. Ask for their approach, then give feedback,
 explain unfamiliar concepts, and ask follow-ups where needed. Their reasoning shapes
